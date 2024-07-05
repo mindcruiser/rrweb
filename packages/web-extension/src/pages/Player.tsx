@@ -27,6 +27,7 @@ export default function Player() {
       });
     getEvents(sessionId)
       .then((events) => {
+        console.log("🚀 ~ .then ~ events:", events)
         if (!playerElRef.current) return;
 
         const linkEl = document.createElement('link');

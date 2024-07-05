@@ -11,6 +11,90 @@ import { isInCrossOriginIFrame } from '~/utils';
 const events: eventWithTime[] = [];
 let stopFn: (() => void) | null = null;
 
+const clickEventListener = (e: MouseEvent) => {
+  const el = e.target as HTMLElement;
+
+  // 获取元素的边界矩形
+  const rect = el.getBoundingClientRect();
+
+  // 获取宽度和高度
+  const width = rect.width;
+  const height = rect.height;
+
+  // 获取绝对位置
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+  const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+  const absoluteTop = rect.top + scrollTop;
+  const absoluteLeft = rect.left + scrollLeft;
+
+  const eventData = {
+    element: el.outerHTML,
+    text: el.innerText || '',
+    position: { x: e.clientX, y: e.clientY },
+    elementPosition: { x: absoluteLeft, y: absoluteTop, width, height },
+    alt: el.getAttribute('alt') || '',
+  };
+
+  console.log('🚀 ~ clickEventListener ~ eventData:', eventData);
+
+  record.addCustomEvent('mouse-click', eventData);
+};
+
+const focusEventListener = (e: FocusEvent) => {
+  const el = e.target as HTMLElement;
+
+  // 获取元素的边界矩形
+  const rect = el.getBoundingClientRect();
+
+  // 获取宽度和高度
+  const width = rect.width;
+  const height = rect.height;
+
+  // 获取绝对位置
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+  const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+  const absoluteTop = rect.top + scrollTop;
+  const absoluteLeft = rect.left + scrollLeft;
+
+  const eventData = {
+    element: el.outerHTML,
+    text: el.innerText || '',
+    elementPosition: { x: absoluteLeft, y: absoluteTop, width, height },
+    alt: el.getAttribute('alt') || '',
+  };
+
+  console.log('🚀 ~ focusEventListener ~ eventData:', eventData);
+
+  record.addCustomEvent('focus-event', eventData);
+};
+
+const inputEventListener = (e: Event) => {
+  const el = e.target as HTMLInputElement;
+
+  // 获取元素的边界矩形
+  const rect = el.getBoundingClientRect();
+
+  // 获取宽度和高度
+  const width = rect.width;
+  const height = rect.height;
+
+  // 获取绝对位置
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+  const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+  const absoluteTop = rect.top + scrollTop;
+  const absoluteLeft = rect.left + scrollLeft;
+
+  const eventData = {
+    element: el.outerHTML,
+    text: el.value || '',
+    elementPosition: { x: absoluteLeft, y: absoluteTop, width, height },
+  };
+
+  console.log('🚀 ~ inputEventListener ~ eventData:', eventData);
+
+  record.addCustomEvent('text-input', eventData);
+};
+
 function startRecord(config: recordOptions<eventWithTime>) {
   events.length = 0;
   stopFn =
@@ -41,6 +125,9 @@ const messageHandler = (
   const eventHandler = {
     [MessageName.StartRecord]: () => {
       startRecord(data.config || {});
+      window.addEventListener('click', clickEventListener);
+      window.addEventListener('focusin', focusEventListener);
+      window.addEventListener('input', inputEventListener);
     },
     [MessageName.StopRecord]: () => {
       if (stopFn) {
@@ -56,6 +143,9 @@ const messageHandler = (
         endTimestamp: Date.now(),
       });
       window.removeEventListener('message', messageHandler);
+      window.removeEventListener('click', clickEventListener);
+      window.removeEventListener('focus', focusEventListener);
+      window.removeEventListener('input', inputEventListener);
     },
   } as Record<MessageName, () => void>;
   if (eventHandler[data.message]) eventHandler[data.message]();
