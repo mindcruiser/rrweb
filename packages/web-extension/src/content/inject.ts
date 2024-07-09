@@ -95,6 +95,61 @@ const inputEventListener = (e: Event) => {
   record.addCustomEvent('text-input', eventData);
 };
 
+const getDirection = (
+  prev: number,
+  current: number,
+  dir: 'vertical' | 'horizontal',
+) => {
+  if (prev === current) return 'normal';
+
+  if (dir === 'vertical') {
+    return current > prev ? 'down' : 'up';
+  } else if (dir === 'horizontal') {
+    return current > prev ? 'right' : 'left';
+  }
+};
+
+const isDocumentElement = (element: any) => {
+  return element === document || element === document.documentElement;
+};
+
+const scrollEventListener = (e: Event) => {
+  const el = (
+    isDocumentElement(e.target) ? document.scrollingElement : e.target
+  ) as HTMLElement;
+
+  const previousScrollTop = el?.getAttribute('data-prev-scrollTop') || '0';
+  const previousScrollLeft = el?.getAttribute('data-prev-scrollLeft') || '0';
+
+  // 初始化之前的滚动位置
+  el?.setAttribute('data-prev-scrollTop', previousScrollTop);
+  el?.setAttribute('data-prev-scrollLeft', previousScrollLeft);
+
+  const direction = {
+    vertical: getDirection(~~previousScrollTop, el.scrollTop, 'vertical'),
+    horizontal: getDirection(~~previousScrollLeft, el.scrollLeft, 'horizontal'),
+  };
+
+  const offset = {
+    vertical: Math.abs(el.scrollTop - Number(previousScrollTop)),
+    horizontal: Math.abs(el.scrollLeft - Number(previousScrollLeft)),
+  };
+
+  // 更新之前的滚动位置
+  el?.setAttribute('data-prev-scrollTop', String(el.scrollTop || 0));
+  el?.setAttribute('data-prev-scrollLeft', String(el.scrollLeft || 0));
+
+  const eventData = {
+    // element: el?.outerHTML,
+    direction,
+    offset,
+  };
+
+  console.log('🚀 ~ scrollEventListener ~ eventData:', eventData);
+
+  record.addCustomEvent('scroll', eventData);
+};
+
 function startRecord(config: recordOptions<eventWithTime>) {
   events.length = 0;
   stopFn =
@@ -128,6 +183,7 @@ const messageHandler = (
       window.addEventListener('click', clickEventListener);
       window.addEventListener('focusin', focusEventListener);
       window.addEventListener('input', inputEventListener);
+      window.addEventListener('scrollend', scrollEventListener, true);
     },
     [MessageName.StopRecord]: () => {
       if (stopFn) {
@@ -146,6 +202,7 @@ const messageHandler = (
       window.removeEventListener('click', clickEventListener);
       window.removeEventListener('focus', focusEventListener);
       window.removeEventListener('input', inputEventListener);
+      window.removeEventListener('scrollend', scrollEventListener, true);
     },
   } as Record<MessageName, () => void>;
   if (eventHandler[data.message]) eventHandler[data.message]();
