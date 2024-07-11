@@ -11,6 +11,44 @@ import { isInCrossOriginIFrame } from '~/utils';
 const events: eventWithTime[] = [];
 let stopFn: (() => void) | null = null;
 
+const getFullXPath = (element: Element) => {
+  if (!(element instanceof Element)) return;
+
+  const getElementIndex = (node: Node) => {
+    let index = 1;
+    let sibling = node.previousSibling;
+    while (sibling) {
+      if (
+        sibling.nodeType === Node.ELEMENT_NODE &&
+        sibling.nodeName === node.nodeName
+      ) {
+        index++;
+      }
+      sibling = sibling.previousSibling;
+    }
+    return index;
+  };
+
+  const getPathSegment = (node: Node) => {
+    const tagName = node.nodeName.toLowerCase();
+    if (node.id) {
+      return `${tagName}[@id="${node.id}"]`;
+    } else {
+      const index = getElementIndex(node);
+      return `${tagName}[${index}]`;
+    }
+  };
+
+  const segments = [];
+  while (element && element.nodeType === Node.ELEMENT_NODE) {
+    segments.unshift(getPathSegment(element));
+    element = element.parentNode;
+  }
+
+  // 使用 '.' 作为分隔符，并移除第一个元素前面的分隔符
+  return segments.length ? `${segments.join('.')}` : null;
+};
+
 const clickEventListener = (e: MouseEvent) => {
   const el = e.target as HTMLElement;
 
@@ -28,7 +66,7 @@ const clickEventListener = (e: MouseEvent) => {
   const absoluteLeft = rect.left + scrollLeft;
 
   const eventData = {
-    element: el.outerHTML,
+    element: getFullXPath(el),
     text: el.innerText || '',
     position: { x: e.clientX, y: e.clientY },
     elementPosition: { x: absoluteLeft, y: absoluteTop, width, height },
@@ -57,7 +95,7 @@ const focusEventListener = (e: FocusEvent) => {
   const absoluteLeft = rect.left + scrollLeft;
 
   const eventData = {
-    element: el.outerHTML,
+    element: getFullXPath(el),
     text: el.innerText || '',
     elementPosition: { x: absoluteLeft, y: absoluteTop, width, height },
     alt: el.getAttribute('alt') || '',
@@ -85,7 +123,7 @@ const inputEventListener = (e: Event) => {
   const absoluteLeft = rect.left + scrollLeft;
 
   const eventData = {
-    element: el.outerHTML,
+    element: getFullXPath(el),
     text: el.value || '',
     elementPosition: { x: absoluteLeft, y: absoluteTop, width, height },
   };
