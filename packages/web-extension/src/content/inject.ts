@@ -31,12 +31,8 @@ const getFullXPath = (element: Element) => {
 
   const getPathSegment = (node: Node) => {
     const tagName = node.nodeName.toLowerCase();
-    if (node.id) {
-      return `${tagName}[@id="${node.id}"]`;
-    } else {
-      const index = getElementIndex(node);
-      return `${tagName}[${index}]`;
-    }
+    const index = getElementIndex(node);
+    return `${tagName}[${index}]`;
   };
 
   const segments = [];
