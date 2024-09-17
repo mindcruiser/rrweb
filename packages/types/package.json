@@ -46,7 +46,7 @@
     "package.json"
   ],
   "devDependencies": {
-    "vite": "^5.3.1",
+    "vite": "^5.3.6",
     "vite-plugin-dts": "^3.9.1"
   },
   "dependencies": {
